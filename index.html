@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f5f6f8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>录音合集 · 5 段</title>
+<!--
+  部署到 GitHub Pages 的说明：
+  1. 本 HTML 与 5 个 .m4a 放在仓库同一目录，保持文件名不变即可直接播放。
+  2. 若改用更简单的文件名，把音频依次改名为 01.m4a ~ 05.m4a，播放器会自动回退尝试，无需改代码。
+  3. 想让本页成为站点首页，把本文件重命名为 index.html，再在仓库 Settings → Pages 开启 GitHub Pages。
+  4. GitHub 单文件需小于 100 MB（本套最大约 92 MB，可上传）；总量约 372 MB，推送较慢，建议 Git LFS 或先压缩音频。
+  5. 熄屏 / 锁屏播放依赖系统媒体会话（Media Session），iOS Safari、Android Chrome 均支持；首次必须手动点一次播放。
+-->
+<style>
+:root{
+  --bg:#f5f6f8; --card:#ffffff; --text:#1b2029; --sub:#6b7280; --line:#e6e9ee;
+  --accent:#3b6ef5; --accent-soft:#eaf0ff; --shadow:0 8px 28px rgba(24,38,70,.08);
+  --track:#e9ecf2; --danger:#d1435b;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#101319; --card:#1a1e26; --text:#eef1f7; --sub:#98a2b3; --line:#2b313c;
+    --accent:#83a5ff; --accent-soft:#232f4d; --shadow:0 8px 28px rgba(0,0,0,.35);
+    --track:#2d333e; --danger:#ff7d92;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  line-height:1.5; -webkit-font-smoothing:antialiased;
+  padding:24px 16px calc(40px + env(safe-area-inset-bottom));
+}
+.app{max-width:720px;margin:0 auto}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+h1{font-size:22px;margin:0;letter-spacing:.3px}
+.sub{font-size:13px;color:var(--sub);margin-top:4px}
+.badge{font-size:12px;color:var(--sub);background:var(--card);border:1px solid var(--line);padding:5px 10px;border-radius:999px;white-space:nowrap}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+.player{padding:20px}
+.now{display:flex;gap:14px;align-items:center;margin-bottom:18px}
+.cover{
+  width:62px;height:62px;flex:0 0 62px;border-radius:14px;
+  background:linear-gradient(135deg,#4f7cff,#8b5cf6);
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:30px;
+  box-shadow:0 6px 16px rgba(79,124,255,.28)
+}
+.now-txt{min-width:0}
+.eyebrow{font-size:12px;color:var(--accent);font-weight:600;letter-spacing:.5px}
+.title{font-size:18px;font-weight:650;margin:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.detail{font-size:12px;color:var(--sub)}
+.seek{
+  -webkit-appearance:none;appearance:none;width:100%;height:22px;background:transparent;margin:0;cursor:pointer;display:block
+}
+.seek::-webkit-slider-runnable-track{height:6px;border-radius:99px;background:linear-gradient(to right,var(--accent) 0%,var(--accent) var(--p,0%),var(--track) var(--p,0%),var(--track) 100%)}
+.seek::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid var(--accent);margin-top:-5px;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.seek::-moz-range-track{height:6px;border-radius:99px;background:var(--track)}
+.seek::-moz-range-progress{height:6px;border-radius:99px;background:var(--accent)}
+.seek::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid var(--accent)}
+.times{display:flex;justify-content:space-between;font-size:12px;color:var(--sub);font-variant-numeric:tabular-nums;margin-top:2px}
+.controls{display:flex;align-items:center;justify-content:center;gap:10px;margin:16px 0 14px}
+button{font-family:inherit;color:inherit;cursor:pointer}
+.ctrl{
+  width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--card);
+  display:flex;align-items:center;justify-content:center;transition:transform .12s,background .12s;
+}
+.ctrl:hover{background:var(--accent-soft)}
+.ctrl:active{transform:scale(.92)}
+.ctrl svg{width:20px;height:20px;fill:currentColor}
+.ctrl.small svg{width:18px;height:18px}
+.ctrl.main{
+  width:62px;height:62px;background:var(--accent);border-color:var(--accent);color:#fff;
+  box-shadow:0 6px 18px rgba(59,110,245,.35)
+}
+.ctrl.main:hover{filter:brightness(1.06);background:var(--accent)}
+.ctrl.main svg{width:26px;height:26px}
+.ctrl:disabled{opacity:.4;cursor:not-allowed}
+.extras{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--sub)}
+.extras select,.extras button.ghost{
+  border:1px solid var(--line);background:var(--card);color:var(--text);
+  border-radius:9px;padding:5px 9px;font-size:12px
+}
+.vol{display:flex;align-items:center;gap:7px}
+.vol input{width:82px;accent-color:var(--accent)}
+.ghost.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.list{margin-top:16px;padding:6px 8px 8px}
+.list h2{font-size:14px;margin:12px 12px 8px;font-weight:650;display:flex;align-items:center;gap:8px}
+.list h2 span{font-size:11px;color:var(--sub);font-weight:400}
+ol{margin:0;padding:0;list-style:none}
+li{
+  display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;cursor:pointer;
+  transition:background .12s
+}
+li:hover{background:var(--accent-soft)}
+li.active{background:var(--accent-soft)}
+li.active .idx,li.active .t-name{color:var(--accent);font-weight:650}
+.idx{width:24px;flex:0 0 24px;text-align:center;font-size:12px;color:var(--sub);font-variant-numeric:tabular-nums}
+.t-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
+.t-dur{font-size:12px;color:var(--sub);font-variant-numeric:tabular-nums}
+.tools{margin-top:16px;padding:14px 16px;font-size:12px;color:var(--sub)}
+.tools-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{
+  display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);
+  border-radius:9px;padding:7px 11px;font-size:12px;color:var(--text)
+}
+.btn:hover{background:var(--accent-soft)}
+#status{margin-top:10px;min-height:16px;line-height:1.5}
+#status.warn{color:var(--danger)}
+details{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+summary{cursor:pointer;font-size:12px;color:var(--accent);outline:none}
+details p{margin:8px 0 0;line-height:1.7}
+details code{background:var(--accent-soft);padding:1px 5px;border-radius:4px;font-size:11px}
+footer{text-align:center;font-size:11px;color:var(--sub);margin-top:18px;line-height:1.8}
+@media (max-width:480px){
+  body{padding:16px 10px calc(30px + env(safe-area-inset-bottom))}
+  .player{padding:16px}
+  .controls{gap:7px}
+  .ctrl{width:40px;height:40px}
+  .ctrl.main{width:58px;height:58px}
+  h1{font-size:19px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>录音合集</h1>
+      <div class="sub">5 段录音 · 按文件名顺序排列 · 共 <span id="totalDur">--</span></div>
+    </div>
+    <div class="badge">熄屏 / 锁屏可继续播放</div>
+  </header>
+
+  <section class="card player">
+    <div class="now">
+      <div class="cover" aria-hidden="true">&#9834;</div>
+      <div class="now-txt">
+        <div class="eyebrow" id="eyebrow">第 1 段 / 共 5 段</div>
+        <div class="title" id="nowTitle">--</div>
+        <div class="detail" id="nowDetail">准备就绪</div>
+      </div>
+    </div>
+
+    <input class="seek" id="seek" type="range" min="0" max="1000" value="0" step="1" aria-label="播放进度">
+    <div class="times"><span id="curTime">00:00</span><span id="durTime">--:--</span></div>
+
+    <div class="controls">
+      <button class="ctrl small" id="btnPrev" title="上一段" aria-label="上一段">
+        <svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zm3.5 7L18 5v14z"/></svg>
+      </button>
+      <button class="ctrl small" id="btnBack" title="后退 15 秒" aria-label="后退 15 秒">
+        <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8zm-1.1 5.2h1.3v4.1l3.3 2-.7 1.1-3.9-2.3z"/></svg>
+      </button>
+      <button class="ctrl main" id="btnPlay" title="播放 / 暂停" aria-label="播放"></button>
+      <button class="ctrl small" id="btnFwd" title="前进 15 秒" aria-label="前进 15 秒">
+        <svg viewBox="0 0 24 24"><path d="M12 5V1l5 5-5 5V7a6 6 0 1 0 6 6h2a8 8 0 1 1-8-8zm1.1 5.2h-1.3v4.1l-3.3 2 .7 1.1 3.9-2.3z"/></svg>
+      </button>
+      <button class="ctrl small" id="btnNext" title="下一段" aria-label="下一段">
+        <svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM6 5l8.5 7L6 19z"/></svg>
+      </button>
+    </div>
+
+    <div class="extras">
+      <label>倍速
+        <select id="rate">
+          <option value="0.75">0.75×</option>
+          <option value="1" selected>1.0×</option>
+          <option value="1.25">1.25×</option>
+          <option value="1.5">1.5×</option>
+          <option value="2">2.0×</option>
+        </select>
+      </label>
+      <label class="vol">音量 <input id="vol" type="range" min="0" max="1" step="0.01" value="1" aria-label="音量"></label>
+      <button class="ghost" id="btnLoop" title="循环模式">循环：关</button>
+      <button class="ghost" id="btnSleep" title="定时停止">定时：关</button>
+    </div>
+  </section>
+
+  <section class="card list">
+    <h2>播放列表 <span>点击任意一段开始收听</span></h2>
+    <ol id="playlist"></ol>
+  </section>
+
+  <section class="card tools">
+    <div class="tools-row">
+      <label class="btn">导入本地音频
+        <input id="fileInput" type="file" accept="audio/*,.m4a,.mp3,.aac" multiple hidden>
+      </label>
+      <button class="btn" id="btnRestore">恢复内置列表</button>
+      <button class="btn" id="btnJump">回到上次位置</button>
+    </div>
+    <div id="status"></div>
+    <details>
+      <summary>使用与部署说明</summary>
+      <p>
+        · <b>熄屏播放</b>：点一次「播放」后即可锁屏或切到后台，声音会继续；锁屏界面 / 通知栏 / 耳机按键可切歌、暂停、快进。iOS 与 Android 自带浏览器、Chrome、Safari 均支持。请勿在手机「省电模式」下强制冻结浏览器。<br>
+        · <b>快捷键</b>：空格 播放/暂停，← → 快退/快进 10 秒，↑ ↓ 上一段/下一段。<br>
+        · <b>进度记忆</b>：自动记住听到哪一段、哪一秒，下次打开点「回到上次位置」即可续听。<br>
+        · <b>本地打开</b>：本 HTML 与 5 个 <code>.m4a</code> 放在同一文件夹，双击本文件就能听。<br>
+        · <b>上传 GitHub</b>：把本文件和 5 个音频一起传进仓库同一目录，在 Settings → Pages 开启即可；想作为首页就把本文件改名为 <code>index.html</code>。若把音频改成 <code>01.m4a</code> ~ <code>05.m4a</code>，播放器会自动识别，无需改代码。<br>
+        · <b>体积提示</b>：音频合计约 372 MB，GitHub 单文件上限 100 MB（本套均符合），推送会偏慢；若不方便上传音频，可用「导入本地音频」在手机上选择已下载的文件播放。
+      </p>
+    </details>
+  </section>
+
+  <footer>单文件播放器 · 无需联网、无需任何依赖 · 音频不重新编码，保持原音质</footer>
+</div>
+
+<audio id="audio" preload="metadata" playsinline webkit-playsinline></audio>
+
+<script>
+"use strict";
+
+/* 播放列表：按文件名中的数字顺序 176 → 190 → 199 → 213 → 225。
+   srcs 的第 1 个是当前文件夹中的真实文件名，第 2 个是上传 GitHub 时可选的简化名。
+   \u2006 是文件名里肉眼不可见的窄空格，不要删掉。 */
+const TRACKS = [
+  { name: "176", srcs: ["樊ai176.m4a",        "01.m4a"], dur: 3959.66 },
+  { name: "190", srcs: ["樊ai\u2006190.m4a",  "02.m4a"], dur: 5156.50 },
+  { name: "199", srcs: ["樊ai199.m4a",        "03.m4a"], dur: 3153.13 },
+  { name: "213", srcs: ["樊ai\u2006213.m4a",  "04.m4a"], dur: 4107.31 },
+  { name: "225", srcs: ["樊ai\u2006225.m4a",  "05.m4a"], dur: 4256.77 }
+];
+
+const $ = id => document.getElementById(id);
+const audio = $("audio");
+const LS_KEY = "recorder_collection_player_v1";
+const ICON_PLAY  = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+const ICON_PAUSE = '<svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>';
+
+let tracks = TRACKS.map(t => ({ name: t.name, srcs: t.srcs.slice(), dur: t.dur, local: false }));
+let cur = 0, srcIdx = 0, resumeAt = 0, seeking = false;
+let loopMode = 0;                 // 0 关 / 1 列表循环 / 2 单曲循环
+let sleepAt = 0;                  // 定时停止的时间戳，0 表示关闭
+let lastSaved = 0, lastPos = { cur: 0, pos: 0 };
+let objectUrls = [];
+
+/* ---------- 工具 ---------- */
+function fmt(sec){
+  if (!isFinite(sec) || sec < 0) sec = 0;
+  const s = Math.floor(sec);
+  const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), r = s % 60;
+  const p = n => String(n).padStart(2, "0");
+  return h > 0 ? h + ":" + p(m) + ":" + p(r) : p(m) + ":" + p(r);
+}
+function esc(s){
+  return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+}
+function setStatus(msg, warn){
+  const el = $("status");
+  el.textContent = msg || "";
+  el.className = warn ? "warn" : "";
+}
+function coverDataURL(){
+  try{
+    const c = document.createElement("canvas"); c.width = c.height = 512;
+    const g = c.getContext("2d");
+    const grd = g.createLinearGradient(0, 0, 512, 512);
+    grd.addColorStop(0, "#4f7cff"); grd.addColorStop(1, "#8b5cf6");
+    g.fillStyle = grd; g.fillRect(0, 0, 512, 512);
+    g.fillStyle = "rgba(255,255,255,.94)";
+    g.textAlign = "center"; g.textBaseline = "middle";
+    g.font = "bold 230px system-ui, sans-serif"; g.fillText("\u266a", 256, 238);
+    g.font = "600 44px system-ui, sans-serif"; g.fillText("录音合集", 256, 430);
+    return c.toDataURL("image/png");
+  }catch(e){ return null; }
+}
+const COVER = coverDataURL();
+
+/* ---------- 系统媒体会话：锁屏 / 通知栏 / 耳机按键 ---------- */
+function updateMediaSession(){
+  if (!("mediaSession" in navigator)) return;
+  const t = tracks[cur];
+  const meta = { title: "第 " + (cur + 1) + " 段 · " + t.name, artist: "录音合集", album: "共 " + tracks.length + " 段" };
+  try{
+    navigator.mediaSession.metadata = new MediaMetadata(meta);
+    navigator.mediaSession.playbackState = audio.paused ? "paused" : "playing";
+  }catch(e){}
+  /* 部分浏览器拒绝 data: 形式的封面，单独尝试，失败也不影响锁屏标题与控制 */
+  if (COVER){
+    try{ navigator.mediaSession.metadata = new MediaMetadata(Object.assign({}, meta, { artwork: [{ src: COVER, sizes: "512x512", type: "image/png" }] })); }catch(e){}
+  }
+  const bind = (action, fn) => { try{ navigator.mediaSession.setActionHandler(action, fn); }catch(e){} };
+  bind("play", () => startPlayback());
+  bind("pause", () => audio.pause());
+  bind("previoustrack", () => select(cur - 1, true));
+  bind("nexttrack", () => select(cur + 1, true));
+  bind("seekbackward", d => { audio.currentTime = Math.max(0, audio.currentTime - (d && d.seekOffset ? d.seekOffset : 15)); });
+  bind("seekforward",  d => { audio.currentTime = Math.min(dur(), audio.currentTime + (d && d.seekOffset ? d.seekOffset : 15)); });
+  bind("seekto", d => { if (d && isFinite(d.seekTime)) audio.currentTime = d.seekTime; });
+}
+function updatePositionState(){
+  if (!("mediaSession" in navigator) || !navigator.mediaSession.setPositionState) return;
+  const d = dur();
+  if (!isFinite(d) || d <= 0) return;
+  try{
+    navigator.mediaSession.setPositionState({
+      duration: d, playbackRate: audio.playbackRate || 1,
+      position: Math.min(audio.currentTime || 0, d)
+    });
+  }catch(e){}
+}
+
+/* ---------- 播放列表渲染 ---------- */
+function dur(){ return isFinite(audio.duration) && audio.duration > 0 ? audio.duration : (tracks[cur] && tracks[cur].dur) || 0; }
+function renderList(){
+  const ol = $("playlist");
+  ol.innerHTML = "";
+  tracks.forEach((t, i) => {
+    const li = document.createElement("li");
+    li.className = i === cur ? "active" : "";
+    li.innerHTML = '<span class="idx">' + (i === cur && !audio.paused ? "&#9654;" : String(i + 1).padStart(2, "0")) + "</span>" +
+                   '<span class="t-name">' + esc(t.name) + "</span>" +
+                   '<span class="t-dur">' + (t.dur ? fmt(t.dur) : "--:--") + "</span>";
+    li.addEventListener("click", () => select(i, true));
+    ol.appendChild(li);
+  });
+  const total = tracks.reduce((a, t) => a + (t.dur || 0), 0);
+  $("totalDur").textContent = total ? fmt(total) : "--";
+}
+function paintNow(){
+  const t = tracks[cur];
+  $("eyebrow").textContent = "第 " + (cur + 1) + " 段 / 共 " + tracks.length + " 段";
+  $("nowTitle").textContent = t.name;
+  $("nowDetail").textContent = t.local ? "本地导入的音频" : "录音合集 · " + (t.dur ? fmt(t.dur) : "--:--");
+  $("btnPlay").innerHTML = audio.paused ? ICON_PLAY : ICON_PAUSE;
+  $("durTime").textContent = dur() ? fmt(dur()) : "--:--";
+  updateMediaSession();
+  renderList();
+}
+function paintProgress(){
+  const d = dur();
+  $("curTime").textContent = fmt(audio.currentTime || 0);
+  if (!seeking && d > 0){
+    const p = Math.min(1000, Math.round((audio.currentTime / d) * 1000));
+    $("seek").value = p;
+    $("seek").style.setProperty("--p", (p / 10) + "%");
+  }
+}
+
+/* ---------- 加载与切换 ---------- */
+function applySource(autoplay){
+  const t = tracks[cur];
+  audio.src = t.srcs[srcIdx];
+  audio.load();
+  if (autoplay) startPlayback();
+}
+function load(i, autoplay, at){
+  cur = (i + tracks.length) % tracks.length;
+  srcIdx = 0;
+  resumeAt = at || 0;
+  paintNow();
+  applySource(!!autoplay);
+}
+function select(i, autoplay){
+  if (i < 0 || i >= tracks.length) i = (i + tracks.length) % tracks.length;
+  load(i, autoplay, 0);
+  saveState();
+}
+function startPlayback(){
+  const p = audio.play();
+  if (p && typeof p.catch === "function"){
+    p.catch(() => setStatus("浏览器需要你手动点一下「播放」才能开始发声。", true));
+  }
+}
+
+audio.addEventListener("loadedmetadata", () => {
+  if (resumeAt > 0 && resumeAt < dur()){
+    try{ audio.currentTime = resumeAt; }catch(e){}
+  }
+  resumeAt = 0;
+  if (tracks[cur] && !tracks[cur].dur){
+    tracks[cur].dur = audio.duration;
+    renderList();
+  }
+  paintNow();
+  paintProgress();
+  updatePositionState();
+});
+/* 文件名不匹配时自动尝试备用文件名 */
+audio.addEventListener("error", () => {
+  const t = tracks[cur];
+  if (srcIdx + 1 < t.srcs.length){
+    srcIdx++;
+    setStatus("未找到「" + t.srcs[0] + "」，正在尝试备用文件名…");
+    applySource(false);
+  }else{
+    setStatus("找不到音频文件「" + t.srcs[0] + "」。请确认音频与本网页在同一文件夹；也可点「导入本地音频」手动选择。", true);
+    $("nowDetail").textContent = "音频未找到";
+  }
+});
+audio.addEventListener("timeupdate", () => {
+  paintProgress();
+  updatePositionState();
+  if (sleepAt && Date.now() >= sleepAt){
+    sleepAt = 0;
+    audio.pause();
+    $("btnSleep").textContent = "定时：关";
+    $("btnSleep").classList.remove("on");
+    setStatus("定时时间已到，播放已停止。");
+  }
+  if (Date.now() - lastSaved > 5000) saveState();
+});
+audio.addEventListener("play",  () => { paintNow(); setStatus(""); });
+audio.addEventListener("pause", () => { paintNow(); saveState(); });
+audio.addEventListener("ended", () => {
+  if (loopMode === 2){ audio.currentTime = 0; startPlayback(); return; }
+  if (cur === tracks.length - 1 && loopMode === 0){
+    paintNow(); setStatus("已播放完最后一段。"); saveState(); return;
+  }
+  select(cur + 1, true);           // 同一 audio 元素续播，后台 / 熄屏下也能触发
+});
+/* 关键：页面隐藏时绝不暂停，回来只刷新界面 */
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden){
+    paintProgress(); updatePositionState();
+    if (sleepAt && Date.now() >= sleepAt) audio.pause();
+  }
+});
+window.addEventListener("pagehide", saveState);
+
+/* ---------- 控制 ---------- */
+$("btnPlay").addEventListener("click", () => audio.paused ? startPlayback() : audio.pause());
+$("btnPrev").addEventListener("click", () => select(cur - 1, true));
+$("btnNext").addEventListener("click", () => select(cur + 1, true));
+$("btnBack").addEventListener("click", () => { audio.currentTime = Math.max(0, audio.currentTime - 15); });
+$("btnFwd").addEventListener("click",  () => { audio.currentTime = Math.min(dur(), audio.currentTime + 15); });
+
+const seek = $("seek");
+seek.addEventListener("input", () => {
+  seeking = true;
+  const d = dur();
+  seek.style.setProperty("--p", (seek.value / 10) + "%");
+  $("curTime").textContent = fmt(d * seek.value / 1000);
+});
+seek.addEventListener("change", () => {
+  if (dur() > 0) audio.currentTime = dur() * seek.value / 1000;
+  seeking = false;
+  updatePositionState();
+});
+
+$("rate").addEventListener("change", e => { audio.playbackRate = parseFloat(e.target.value); updatePositionState(); });
+$("vol").addEventListener("input", e => { audio.volume = parseFloat(e.target.value); });
+
+const LOOP_LABEL = ["循环：关", "循环：列表", "循环：单曲"];
+$("btnLoop").addEventListener("click", () => {
+  loopMode = (loopMode + 1) % 3;
+  $("btnLoop").textContent = LOOP_LABEL[loopMode];
+  $("btnLoop").classList.toggle("on", loopMode > 0);
+});
+const SLEEP_STEPS = [0, 15, 30, 60, 90];
+let sleepStep = 0;
+$("btnSleep").addEventListener("click", () => {
+  sleepStep = (sleepStep + 1) % SLEEP_STEPS.length;
+  const m = SLEEP_STEPS[sleepStep];
+  sleepAt = m ? Date.now() + m * 60000 : 0;
+  $("btnSleep").textContent = m ? "定时：" + m + " 分" : "定时：关";
+  $("btnSleep").classList.toggle("on", m > 0);
+  setStatus(m ? "将在约 " + m + " 分钟后停止播放（熄屏时可能略有延迟）。" : "定时停止已取消。");
+});
+
+/* ---------- 本地文件兜底：GitHub 上没传音频也能选听 ---------- */
+$("fileInput").addEventListener("change", e => {
+  const files = Array.from(e.target.files || []).filter(f => f.type.startsWith("audio/") || /\.(m4a|mp3|aac|wav|ogg|flac)$/i.test(f.name));
+  if (!files.length){ setStatus("没有选中可播放的音频文件。", true); return; }
+  files.sort((a, b) => a.name.localeCompare(b.name, "zh-CN", { numeric: true }));
+  objectUrls.forEach(u => URL.revokeObjectURL(u));
+  objectUrls = files.map(f => URL.createObjectURL(f));
+  tracks = files.map((f, i) => ({ name: f.name.replace(/\.[^.]+$/, ""), srcs: [objectUrls[i]], dur: 0, local: true }));
+  load(0, false, 0);
+  setStatus("已导入 " + files.length + " 个本地音频，点击列表即可播放。");
+  e.target.value = "";
+});
+$("btnRestore").addEventListener("click", () => {
+  objectUrls.forEach(u => URL.revokeObjectURL(u));
+  objectUrls = [];
+  tracks = TRACKS.map(t => ({ name: t.name, srcs: t.srcs.slice(), dur: t.dur, local: false }));
+  load(0, false, 0);
+  setStatus("已恢复内置播放列表。");
+});
+
+/* ---------- 进度记忆 ---------- */
+function saveState(){
+  try{
+    lastPos = { cur: cur, pos: audio.currentTime || 0 };
+    localStorage.setItem(LS_KEY, JSON.stringify(lastPos));
+    lastSaved = Date.now();
+  }catch(e){}
+}
+function readState(){
+  try{ return JSON.parse(localStorage.getItem(LS_KEY) || "null"); }catch(e){ return null; }
+}
+$("btnJump").addEventListener("click", () => {
+  const s = readState();
+  if (!s || !isFinite(s.pos) || s.pos <= 0){ setStatus("还没有记住的收听位置。"); return; }
+  load(Math.min(s.cur, tracks.length - 1), false, s.pos);
+  setStatus("已回到第 " + (Math.min(s.cur, tracks.length - 1) + 1) + " 段 " + fmt(s.pos) + "，点播放继续。");
+});
+
+document.addEventListener("keydown", e => {
+  if (e.target && /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+  if (e.code === "Space"){ e.preventDefault(); audio.paused ? startPlayback() : audio.pause(); }
+  else if (e.code === "ArrowLeft"){ audio.currentTime = Math.max(0, audio.currentTime - 10); }
+  else if (e.code === "ArrowRight"){ audio.currentTime = Math.min(dur(), audio.currentTime + 10); }
+  else if (e.code === "ArrowUp"){ e.preventDefault(); select(cur - 1, true); }
+  else if (e.code === "ArrowDown"){ e.preventDefault(); select(cur + 1, true); }
+});
+
+/* ---------- 启动 ---------- */
+const saved = readState();
+if (saved && isFinite(saved.cur) && saved.cur >= 0 && saved.cur < tracks.length) lastPos = saved;
+load(0, false, 0);
+if (saved && saved.pos > 0){
+  setStatus("已记住上次听到第 " + (saved.cur + 1) + " 段 " + fmt(saved.pos) + "，点「回到上次位置」可续听。");
+}else{
+  setStatus("准备就绪：点下方任意一段，或按播放键开始；开始后可熄屏收听。");
+}
+</script>
+</body>
+</html>
