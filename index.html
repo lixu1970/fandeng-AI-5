@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="樊登讲书">
-<meta name="version" content="1.0.0">
+<meta name="version" content="1.0.1">
 <meta name="description" content="樊登讲书 · 有声书库：5 集精选音频，支持锁屏 / 熄屏播放、倍速、定时关闭与单集分享。">
 <meta property="og:title" content="樊登讲书 · 有声书库">
 <meta property="og:description" content="5 集精选音频，支持锁屏播放、倍速与单集分享。">
@@ -19,9 +19,28 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/cover-192.png">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=1.0.1">
+<style>
+/* 仅用于“只打开了 index.html”时的自救提示，不依赖外部 CSS */
+#bootError{position:fixed;top:0;left:0;right:0;z-index:9999;padding:calc(12px + env(safe-area-inset-top)) 16px 14px;background:#2a1512;color:#ffe8df;border-bottom:1px solid #713a2e;font:13px/1.65 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.45)}
+#bootError[hidden]{display:none}
+#bootError b{display:block;margin-bottom:6px;font-size:15px;color:#fff}
+#bootError p{margin:0 0 6px}
+#bootError code{padding:1px 4px;border-radius:4px;background:rgba(255,255,255,.1);font-size:12px}
+#bootError .u{opacity:.6;word-break:break-all;font-size:11px}
+#bootError button{margin-top:8px;padding:7px 12px;border:1px solid rgba(255,255,255,.25);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font:inherit}
+</style>
 </head>
 <body>
+
+<!-- ============ 只打开 index.html 时的自救提示 ============ -->
+<div id="bootError" hidden>
+  <b>页面资源没有加载完整</b>
+  <p>你现在打开的只是 <code>index.html</code>。请把它和 <code>style.css</code>、<code>app.js</code>、<code>playlist.js</code>、<code>audio/</code>、<code>assets/</code> 放在同一目录；或者直接打开部署后的完整网址。</p>
+  <p>添加到主屏幕时，请添加<b>完整网址</b>，不要添加单个 HTML 文件。</p>
+  <p class="u" id="bootUrl"></p>
+  <button type="button" onclick="this.parentNode.hidden=true">知道了</button>
+</div>
 
 <!-- ============ 图标 ============ -->
 <svg class="svg-sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
@@ -101,7 +120,7 @@
         <svg aria-hidden="true"><use href="#i-shuffle"></use></svg>
         <span>随机播放全部</span>
       </button>
-      <button class="version-btn" id="btnVersion" type="button" title="版本与说明">v1.0.0</button>
+      <button class="version-btn" id="btnVersion" type="button" title="版本与说明">v1.0.1</button>
     </div>
   </aside>
 
@@ -224,7 +243,7 @@
         <span class="status-dot" id="statusDot" aria-hidden="true"></span>
         <span id="statusText">就绪</span>
       </span>
-      <span class="status-right" id="miniInfo">v1.0.0 · 锁屏可播放</span>
+      <span class="status-right" id="miniInfo">v1.0.1 · 锁屏可播放</span>
     </footer>
   </main>
 </div>
@@ -243,7 +262,7 @@
       <div class="brand-logo small" aria-hidden="true"><span>樊</span></div>
       <div>
         <h3 id="modalTitle">版本与说明</h3>
-        <p id="modalVersion">v1.0.0 · 2026-11-14</p>
+        <p id="modalVersion">v1.0.1 · 2026-11-15</p>
       </div>
     </div>
     <div class="modal-body" id="modalBody"></div>
@@ -254,7 +273,36 @@
   <div class="noscript">请开启 JavaScript 后使用播放器。</div>
 </noscript>
 
-<script src="playlist.js"></script>
-<script src="app.js"></script>
+<script src="playlist.js?v=1.0.1"></script>
+<script src="app.js?v=1.0.1"></script>
+
+<script>
+/* 页面资源自检：只打开 index.html 时给出明确提示 */
+(function () {
+  function cssLoaded() {
+    try {
+      for (var i = 0; i < document.styleSheets.length; i++) {
+        var s = document.styleSheets[i];
+        var href = s.href || '';
+        if (href.indexOf('style.css') !== -1) {
+          try { if (s.cssRules && s.cssRules.length) return true; }
+          catch (e) { return true; }
+        }
+      }
+    } catch (e) {}
+    return false;
+  }
+  function check() {
+    if (window.__FD_READY__ === true && cssLoaded()) return;
+    var el = document.getElementById('bootError');
+    if (el) {
+      var u = document.getElementById('bootUrl');
+      if (u) u.textContent = location.href;
+      el.hidden = false;
+    }
+  }
+  window.addEventListener('load', function () { setTimeout(check, 150); });
+})();
+</script>
 </body>
 </html>
